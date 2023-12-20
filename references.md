@@ -3,4 +3,8 @@ List of references used:
 - http://www.cse.yorku.ca/~kosta/CompVis_Notes/ransac.pdf
 - https://dl.acm.org/doi/pdf/10.1145/358669.358692
 - https://cseweb.ucsd.edu/classes/wi07/cse252a/homography_estimation/homography_estimation.pdf
+- https://www.cs.ubc.ca/sites/default/files/2022-12/Dubrofsky_Elan.pdf
+- https://www.cs.umd.edu/class/fall2019/cmsc426-0201/files/16_Homography-estimation-and-decomposition.pdf
+- https://www.cs.umd.edu/class/fall2019/cmsc426-0201/files/17_Homography-estimation.pdf
+- https://math.stackexchange.com/questions/494238/how-to-compute-homography-matrix-h-from-corresponding-points-2d-2d-planar-homog
 
