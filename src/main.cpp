@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #ifdef __APPLE__
-#include <OpenCL/cl.h>
+#include <OpenCL/opencl.hpp>
 #else
 #include <CL/cl.h>
 #endif
@@ -21,7 +21,7 @@ void detectDevices(void)
     cl_uint num_devices, i;
     clGetDeviceIDs(NULL, CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices);
 
-    cl_device_id* devices = calloc(sizeof(cl_device_id), num_devices);
+    cl_device_id* devices = (cl_device_id *) calloc(sizeof(cl_device_id), num_devices);
     clGetDeviceIDs(NULL, CL_DEVICE_TYPE_ALL, num_devices, devices, NULL);
 
     char buf[128];
