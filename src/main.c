@@ -1,6 +1,11 @@
-#include <OpenCL/cl.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
+#include <CL/cl.h>
+#endif
 
 void detectDevices(void);
 
