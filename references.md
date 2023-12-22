@@ -12,4 +12,6 @@ List of references used:
 - https://pages.cs.wisc.edu/~dyer/cs534/papers/RANSAC4Dummies.pdf
 - https://www.cs.cmu.edu/~16385/s17/Slides/10.3_2D_Alignment__RANSAC.pdf
 - https://www.uio.no/studier/emner/matnat/its/TEK5030/v19/lect/lecture_4_3-estimating-homographies-from-feature-correspondences.pdf
+- https://courses.cs.washington.edu/courses/cse576/16sp/Slides/10_ImageStitching.pdf
+- https://courses.engr.illinois.edu/cs498dh/fa2011/lectures/Lecture%2018%20-%20Photo%20Stitching%20-%20CP%20Fall%202011.pdf
 
