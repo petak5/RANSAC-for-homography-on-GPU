@@ -30,6 +30,7 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
     cv::Mat bestH;
     int bestInliers = 0;
     int bestInliers_ref = 0;
+    std::vector<cv::Point2f> bestPointsA_our, bestPointsB_our, bestPointsA_ref, bestPointsB_ref;
 
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
@@ -50,9 +51,17 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
         if (inliers_our > bestInliers) {
             bestInliers = inliers_our;
             bestH = H_our;
+            bestPointsA_our = pickedPointsA;
+            bestPointsB_our = pickedPointsB;
+
+            std::cout << "New best inliers our: " << inliers_our << " | " << inliers_ref << std::endl;
         }
         if (inliers_ref > bestInliers_ref) {
             bestInliers_ref = inliers_ref;
+            bestPointsA_ref = pickedPointsA;
+            bestPointsB_ref = pickedPointsB;
+
+            std::cout << "New best inliers ref: " << inliers_our << " | " << inliers_ref << std::endl;
         }
     }
     if (bestInliers == 0) {
@@ -61,8 +70,12 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
     }
     // 5. Optional: refine homography using all inliers from the best model
 
+    std::cout << "Best our points A & B\n" << bestPointsA_our << std::endl;
+    std::cout << bestPointsB_our << std::endl;
+    std::cout << "Best ref points A & B\n" << bestPointsA_ref << std::endl;
+    std::cout << bestPointsB_ref << std::endl;
     std::cout << "Our inliers count: " << bestInliers << std::endl;
-    std::cout << "Ref inliers count: " << bestInliers << std::endl;
+    std::cout << "Ref inliers count: " << bestInliers_ref << std::endl;
 
     return bestH;
 }
