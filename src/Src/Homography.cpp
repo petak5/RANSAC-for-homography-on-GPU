@@ -22,61 +22,47 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
     assert(pointsB.size() >= numPoints);
     assert(pointsA.size() == pointsB.size());
 
-    std::vector<cv::Point2f> pickedPointsA, pickedPointsB;
+    Performance perf;
 
-    int maxIterations = 10000;
-    double distanceThreshold = 3;
+    using std::chrono::high_resolution_clock;
+    using std::chrono::duration;
+
+    auto t1 = high_resolution_clock::now();
+
+    std::vector<cv::Point2f> pickedPointsA, pickedPointsB;
 
     cv::Mat bestH;
     int bestInliers = 0;
-    int bestInliers_ref = 0;
-    std::vector<cv::Point2f> bestPointsA_our, bestPointsB_our, bestPointsA_ref, bestPointsB_ref;
+    std::vector<cv::Point2f> bestPointsA_our, bestPointsB_our;
 
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
         selectRandomSample(pointsA, pointsB, pickedPointsA, pickedPointsB);
 
         // 2. Compute homography for this sample (using DLT and SVD)
-        cv::Mat H_our = this->findHomography(pickedPointsA, pickedPointsB);
-        cv::Mat H_ref = cv::findHomography(pickedPointsA, pickedPointsB);
-
-        // std::cout << H_our << std::endl;
-        // std::cout << H_ref << std::endl << std::endl;
+        cv::Mat H = this->findHomography(pickedPointsA, pickedPointsB);
 
         // 3. Count inliers
-        int inliers_our = countInliers(pointsA, pointsB, H_our, distanceThreshold);
-        int inliers_ref = countInliers(pointsA, pointsB, H_ref, distanceThreshold);
+        int inliers = countInliers(pointsA, pointsB, H, distanceThreshold);
 
         // 4. Update best homography if current one has more inliers
-        if (inliers_our > bestInliers) {
-            bestInliers = inliers_our;
-            bestH = H_our;
-            bestPointsA_our = pickedPointsA;
-            bestPointsB_our = pickedPointsB;
-
-            std::cout << "New best inliers our: " << inliers_our << " | " << inliers_ref << std::endl;
-        }
-        if (inliers_ref > bestInliers_ref) {
-            bestInliers_ref = inliers_ref;
-            bestPointsA_ref = pickedPointsA;
-            bestPointsB_ref = pickedPointsB;
-
-            std::cout << "New best inliers ref: " << inliers_our << " | " << inliers_ref << std::endl;
+        if (inliers > bestInliers) {
+            bestInliers = inliers;
+            bestH = H;
         }
     }
+
     if (bestInliers == 0) {
         std::cout << "No inliers found" << std::endl;
         exit(1);
     }
+
+    auto t2 = high_resolution_clock::now();
+
+    this->pref.timeTaken = t2 - t1;
+    this->pref.inlierCount = bestInliers;
+    
     // 5. Optional: refine homography using all inliers from the best model
-
-    std::cout << "Best our points A & B\n" << bestPointsA_our << std::endl;
-    std::cout << bestPointsB_our << std::endl;
-    std::cout << "Best ref points A & B\n" << bestPointsA_ref << std::endl;
-    std::cout << bestPointsB_ref << std::endl;
-    std::cout << "Our inliers count: " << bestInliers << std::endl;
-    std::cout << "Ref inliers count: " << bestInliers_ref << std::endl;
-
     return bestH;
 }
 
@@ -174,4 +160,10 @@ cv::Mat Homography::DLT(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2
     H = H / H.at<double>(2, 2);
 
     return H;
+}
+
+std::ostream& operator<<(std::ostream& os, const Performance& perf) {
+    os << "Time taken: " << perf.timeTaken.count() << " ms" << std::endl;
+    os << "Inliers: " << perf.inlierCount << std::endl;
+    return os;
 }

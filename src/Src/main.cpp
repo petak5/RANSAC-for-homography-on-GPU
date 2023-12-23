@@ -70,14 +70,17 @@ int main(int argc, char** argv) {
 
     // Find homography matrix
 
-    cv::Mat H_ref = cv::findHomography(points1, points2, cv::RANSAC);
-    // auto homography_ref = new Homography(Homography::CV);
-    // cv::Mat H_ref = homography_ref->find(points1, points2);
+    // cv::Mat H_ref = cv::findHomography(points1, points2, cv::RANSAC);
+
+    auto homography_ref = new Homography(Homography::CV);
+    cv::Mat H_ref = homography_ref->find(points1, points2);
     auto homography_our = new Homography(Homography::DLT);
     cv::Mat H_our = homography_our->find(points1, points2);
 
     std::cout << "Reference homography" << std::endl << H_ref << std::endl;
+    std::cout << homography_ref->pref << std::endl;
     std::cout << "Our homography" << std::endl << H_our << std::endl;
+    std::cout << homography_our->pref << std::endl;
 
     // Warp image
     cv::Mat img1_ref_warped;
