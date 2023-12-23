@@ -59,8 +59,8 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
 
     auto t2 = high_resolution_clock::now();
 
-    this->pref.timeTaken = t2 - t1;
-    this->pref.inlierCount = bestInliers;
+    this->perf.timeTaken = t2 - t1;
+    this->perf.inlierCount = bestInliers;
     
     // 5. Optional: refine homography using all inliers from the best model
     return bestH;

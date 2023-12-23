@@ -21,7 +21,7 @@ private:
 public:
     Homography(HomographyFinder findHomography);
     ~Homography();
-    Performance pref;
+    Performance perf;
     int maxIterations = 10000;
     double distanceThreshold = 3;
     cv::Mat find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point2f> &pointsB);

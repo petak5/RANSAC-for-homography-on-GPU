@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
     cv::Mat H_our = homography_our->find(points1, points2);
 
     std::cout << "Reference homography" << std::endl << H_ref << std::endl;
-    std::cout << homography_ref->pref << std::endl;
+    std::cout << homography_ref->perf << std::endl;
     std::cout << "Our homography" << std::endl << H_our << std::endl;
-    std::cout << homography_our->pref << std::endl;
+    std::cout << homography_our->perf << std::endl;
 
     // Warp image
     cv::Mat img1_ref_warped;
