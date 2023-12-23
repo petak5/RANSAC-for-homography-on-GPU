@@ -8,7 +8,6 @@
 Homography::Homography(HomographyFinder findHomography)
 {
     this->findHomography = findHomography;
-
 }
 
 Homography::~Homography()
@@ -17,7 +16,7 @@ Homography::~Homography()
 
 cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point2f> &pointsB)
 {
-    unsigned numPoints = 3.5;
+    unsigned numPoints = 4;
 
     assert(pointsA.size() >= numPoints);
     assert(pointsB.size() >= numPoints);
@@ -29,27 +28,31 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
     double distanceThreshold = 3;
 
     cv::Mat bestH;
-    cv::Mat bestH1;
     int bestInliers = 0;
-    // cv::Mat H = cv::findHomography(pointsA, pointsB, cv::RANSAC);
-    // return H;
+    int bestInliers_ref = 0;
+
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
         selectRandomSample(pointsA, pointsB, pickedPointsA, pickedPointsB);
 
         // 2. Compute homography for this sample (using DLT and SVD)
-        cv::Mat H = this->findHomography(pointsA, pointsB);
+        cv::Mat H_our = this->findHomography(pickedPointsA, pickedPointsB);
+        cv::Mat H_ref = cv::findHomography(pickedPointsA, pickedPointsB);
 
-        std::cout << H << std::endl;
+        // std::cout << H_our << std::endl;
+        // std::cout << H_ref << std::endl << std::endl;
 
         // 3. Count inliers
-        int inliers = countInliers(pointsA, pointsB, H, distanceThreshold);
+        int inliers_our = countInliers(pointsA, pointsB, H_our, distanceThreshold);
+        int inliers_ref = countInliers(pointsA, pointsB, H_ref, distanceThreshold);
 
         // 4. Update best homography if current one has more inliers
-        if (inliers > bestInliers) {
-            
-            bestInliers = inliers;
-            bestH = H;
+        if (inliers_our > bestInliers) {
+            bestInliers = inliers_our;
+            bestH = H_our;
+        }
+        if (inliers_ref > bestInliers_ref) {
+            bestInliers_ref = inliers_ref;
         }
     }
     if (bestInliers == 0) {
@@ -57,9 +60,17 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
         exit(1);
     }
     // 5. Optional: refine homography using all inliers from the best model
+
+    std::cout << "Our inliers count: " << bestInliers << std::endl;
+    std::cout << "Ref inliers count: " << bestInliers << std::endl;
+
     return bestH;
 }
 
+cv::Mat Homography::CV(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB)
+{
+    return cv::findHomography(pointsA, pointsB, cv::RANSAC);
+}
 
 cv::Mat Homography::DLT(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB)
 {

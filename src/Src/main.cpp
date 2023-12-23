@@ -47,9 +47,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    // // Draw matches
-    // cv::Mat img_matches;
-    // cv::drawMatches(img1, keypoints1, img2, keypoints2, good_matches, img_matches);
+    // Draw matches
+    cv::Mat img_matches;
+    cv::drawMatches(img1, keypoints1, img2, keypoints2, good_matches, img_matches);
 
     // // Show detected matches
     // cv::imshow("Matches", img_matches);
@@ -57,24 +57,43 @@ int main(int argc, char** argv) {
 
     std::vector<cv::Point2f> points1;
     std::vector<cv::Point2f> points2;
-    cout << "Good matches size: " << good_matches.size() << endl;
-    for (size_t i = 0; i < good_matches.size(); i++) {
-        points1.push_back(keypoints1[good_matches[i].queryIdx].pt);
-        points2.push_back(keypoints2[good_matches[i].trainIdx].pt);
+
+    // Pick which matches to use
+    // auto matches_to_use = good_matches;
+    auto matches_to_use = matches;
+
+    cout << "Used matches size: " << matches_to_use.size() << endl;
+    for (size_t i = 0; i < matches_to_use.size(); i++) {
+        points1.push_back(keypoints1[matches_to_use[i].queryIdx].pt);
+        points2.push_back(keypoints2[matches_to_use[i].trainIdx].pt);
     }
 
     // Find homography matrix
 
-    auto homography = new Homography(Homography::DLT);
-    cv::Mat H = homography->find(points1, points2);
+    cv::Mat H_ref = cv::findHomography(points1, points2, cv::RANSAC);
+    // auto homography_ref = new Homography(Homography::CV);
+    // cv::Mat H_ref = homography_ref->find(points1, points2);
+    auto homography_our = new Homography(Homography::DLT);
+    cv::Mat H_our = homography_our->find(points1, points2);
+
+    std::cout << "Reference homography" << std::endl << H_ref << std::endl;
+    std::cout << "Our homography" << std::endl << H_our << std::endl;
 
     // Warp image
-    cv::Mat img1_warped;
-    cv::warpPerspective(img1, img1_warped, H, img2.size());
+    cv::Mat img1_ref_warped;
+    cv::warpPerspective(img1, img1_ref_warped, H_ref, img2.size());
+    cv::Mat img1_our_warped;
+    cv::warpPerspective(img1, img1_our_warped, H_our, img2.size());
 
     // Display the warped image
-    cv::imshow("Warped Image", img1_warped);
-    cv::waitKey(0);
+    // cv::imshow("Warped Image", img1_warped);
+    // cv::waitKey(0);
+
+    cv::imwrite("image_A.jpg", img1);
+    cv::imwrite("image_B.jpg", img2);
+    cv::imwrite("image_matches.jpg", img_matches);
+    cv::imwrite("image_warped_reference.jpg", img1_ref_warped);
+    cv::imwrite("image_warped_our.jpg", img1_our_warped);
 
     return 0;
 }
