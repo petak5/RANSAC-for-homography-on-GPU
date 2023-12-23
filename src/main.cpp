@@ -51,9 +51,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    // // Draw matches
-    // cv::Mat img_matches;
-    // cv::drawMatches(img1, keypoints1, img2, keypoints2, good_matches, img_matches);
+    // Draw matches
+    cv::Mat img_matches;
+    cv::drawMatches(img1, keypoints1, img2, keypoints2, good_matches, img_matches);
 
     // // Show detected matches
     // cv::imshow("Matches", img_matches);
@@ -61,30 +61,43 @@ int main(int argc, char** argv) {
 
     std::vector<cv::Point2f> points1;
     std::vector<cv::Point2f> points2;
-    cout << "Good matches size: " << good_matches.size() << endl;
-    for (size_t i = 0; i < good_matches.size(); i++) {
-        points1.push_back(keypoints1[good_matches[i].queryIdx].pt);
-        points2.push_back(keypoints2[good_matches[i].trainIdx].pt);
+    auto matches_to_use = good_matches;
+    // auto matches_to_use = matches;
+    cout << "Used matches size: " << matches_to_use.size() << endl;
+    for (size_t i = 0; i < matches_to_use.size(); i++) {
+        points1.push_back(keypoints1[matches_to_use[i].queryIdx].pt);
+        points2.push_back(keypoints2[matches_to_use[i].trainIdx].pt);
     }
 
     // Find homography matrix
-    // cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC);
-    cv::Mat H = myFindHomography(points1, points2);
+    cv::Mat H_ref = cv::findHomography(points1, points2, cv::RANSAC);
+    cv::Mat H_our = myFindHomography(points1, points2);
+
+    std::cout << "Reference homography" << std::endl << H_ref << std::endl;
+    std::cout << "Our homography" << std::endl << H_our << std::endl;
 
     // Warp image
-    cv::Mat img1_warped;
-    cv::warpPerspective(img1, img1_warped, H, img2.size());
+    cv::Mat img1_ref_warped;
+    cv::warpPerspective(img1, img1_ref_warped, H_ref, img2.size());
+    cv::Mat img1_our_warped;
+    cv::warpPerspective(img1, img1_our_warped, H_our, img2.size());
 
-    // Display the warped image
-    cv::imshow("Warped Image", img1_warped);
-    cv::waitKey(0);
+    // // Display the warped image
+    // cv::imshow("Warped Image", img1_warped);
+    // cv::waitKey(0);
+
+    cv::imwrite("image_A.jpg", img1);
+    cv::imwrite("image_B.jpg", img2);
+    cv::imwrite("image_matches.jpg", img_matches);
+    cv::imwrite("image_warped_reference.jpg", img1_ref_warped);
+    cv::imwrite("image_warped_our.jpg", img1_our_warped);
 
     return 0;
 }
 
 cv::Mat myFindHomography(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB)
 {
-    unsigned numPoints = 3.5;
+    unsigned numPoints = 4;
 
     assert(pointsA.size() >= numPoints);
     assert(pointsB.size() >= numPoints);
@@ -96,37 +109,41 @@ cv::Mat myFindHomography(std::vector<cv::Point2f> pointsA, std::vector<cv::Point
     double distanceThreshold = 3;
 
     cv::Mat bestH;
-    cv::Mat bestH1;
     int bestInliers = 0;
-    // cv::Mat H = cv::findHomography(pointsA, pointsB, cv::RANSAC);
-    // return H;
+    int bestInliers_ref = 0;
+
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
-            // Create a random number generator
         selectRandomSample(pointsA, pointsB, pickedPointsA, pickedPointsB);
 
         // 2. Compute homography for this sample (using DLT and SVD)
-        cv::Mat H1 = myFindHomographyHelper(numPoints, pickedPointsA, pickedPointsB);
-        cv::Mat H2 = cv::findHomography(pickedPointsA, pickedPointsB);
+        cv::Mat H_our = myFindHomographyHelper(numPoints, pickedPointsA, pickedPointsB);
+        cv::Mat H_ref = cv::findHomography(pickedPointsA, pickedPointsB);
 
         // 3. Count inliers
-        int inliers = countInliers(pointsA, pointsB, H2, distanceThreshold);
+        int inliers_our = countInliers(pointsA, pointsB, H_our, distanceThreshold);
+        int inliers_ref = countInliers(pointsA, pointsB, H_ref, distanceThreshold);
 
         // 4. Update best homography if current one has more inliers
-        if (inliers > bestInliers) {
-            
-            bestInliers = inliers;
-            bestH1 = H1;
-            bestH = H2;
+        if (inliers_our > bestInliers) {
+            bestInliers = inliers_our;
+            bestH = H_our;
+        }
+        if (inliers_ref > bestInliers_ref) {
+            bestInliers_ref = inliers_ref;
         }
     }
+
     if (bestInliers == 0) {
         cout << "No inliers found" << endl;
         exit(1);
     }
+
+    std::cout << "Our inliers count: " << bestInliers << std::endl;
+    std::cout << "Ref inliers count: " << bestInliers << std::endl;
+
     // 5. Optional: refine homography using all inliers from the best model
-cout << "Found homography with " << bestH1 << "matrix" << endl;
-cout << "Found homography with " << bestH << "matrix" << endl;
+
     return bestH;
 }
 
