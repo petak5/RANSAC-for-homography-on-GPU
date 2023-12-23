@@ -37,19 +37,19 @@ int main(int argc, char** argv) {
     std::vector<cv::DMatch> matches;
     matcher.match(descriptors1, descriptors2, matches);
 
-    // // Optional: Filter matches (for example, by distance)
-    // double max_dist = 0; double min_dist = 100;
-    // for (int i = 0; i < descriptors1.rows; i++) {
-    //     double dist = matches[i].distance;
-    //     if (dist < min_dist) min_dist = dist;
-    //     if (dist > max_dist) max_dist = dist;
-    // }
-    // std::vector<cv::DMatch> good_matches;
-    // for (int i = 0; i < descriptors1.rows; i++) {
-    //     if (matches[i].distance <= std::max(2 * min_dist, 30.0)) {
-    //         good_matches.push_back(matches[i]);
-    //     }
-    // }
+    // Optional: Filter matches (for example, by distance)
+    double max_dist = 0; double min_dist = 100;
+    for (int i = 0; i < descriptors1.rows; i++) {
+        double dist = matches[i].distance;
+        if (dist < min_dist) min_dist = dist;
+        if (dist > max_dist) max_dist = dist;
+    }
+    std::vector<cv::DMatch> good_matches;
+    for (int i = 0; i < descriptors1.rows; i++) {
+        if (matches[i].distance <= std::max(2 * min_dist, 70.0)) {
+            good_matches.push_back(matches[i]);
+        }
+    }
 
     // // Draw matches
     // cv::Mat img_matches;
@@ -61,10 +61,10 @@ int main(int argc, char** argv) {
 
     std::vector<cv::Point2f> points1;
     std::vector<cv::Point2f> points2;
-
-    for (size_t i = 0; i < matches.size(); i++) {
-        points1.push_back(keypoints1[matches[i].queryIdx].pt);
-        points2.push_back(keypoints2[matches[i].trainIdx].pt);
+    cout << "Good matches size: " << good_matches.size() << endl;
+    for (size_t i = 0; i < good_matches.size(); i++) {
+        points1.push_back(keypoints1[good_matches[i].queryIdx].pt);
+        points2.push_back(keypoints2[good_matches[i].trainIdx].pt);
     }
 
     // Find homography matrix
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
 cv::Mat myFindHomography(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB)
 {
-    unsigned numPoints = 4;
+    unsigned numPoints = 3.5;
 
     assert(pointsA.size() >= numPoints);
     assert(pointsB.size() >= numPoints);
@@ -93,40 +93,47 @@ cv::Mat myFindHomography(std::vector<cv::Point2f> pointsA, std::vector<cv::Point
     std::vector<cv::Point2f> pickedPointsA, pickedPointsB;
 
     int maxIterations = 10000;
-    double distanceThreshold = 10;
+    double distanceThreshold = 3;
 
     cv::Mat bestH;
+    cv::Mat bestH1;
     int bestInliers = 0;
-
+    // cv::Mat H = cv::findHomography(pointsA, pointsB, cv::RANSAC);
+    // return H;
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
+            // Create a random number generator
         selectRandomSample(pointsA, pointsB, pickedPointsA, pickedPointsB);
 
         // 2. Compute homography for this sample (using DLT and SVD)
-        cv::Mat H = myFindHomographyHelper(numPoints, pickedPointsA, pickedPointsB);
-        // cv::Mat H = cv::findHomography(pickedPointsA, pickedPointsB);
+        cv::Mat H1 = myFindHomographyHelper(numPoints, pickedPointsA, pickedPointsB);
+        cv::Mat H2 = cv::findHomography(pickedPointsA, pickedPointsB);
 
         // 3. Count inliers
-        int inliers = countInliers(pointsA, pointsB, H, distanceThreshold);
+        int inliers = countInliers(pointsA, pointsB, H2, distanceThreshold);
 
         // 4. Update best homography if current one has more inliers
         if (inliers > bestInliers) {
+            
             bestInliers = inliers;
-            bestH = H;
+            bestH1 = H1;
+            bestH = H2;
         }
     }
-
+    if (bestInliers == 0) {
+        cout << "No inliers found" << endl;
+        exit(1);
+    }
     // 5. Optional: refine homography using all inliers from the best model
-
+cout << "Found homography with " << bestH1 << "matrix" << endl;
+cout << "Found homography with " << bestH << "matrix" << endl;
     return bestH;
 }
 
 void selectRandomSample(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point2f> &pointsB, std::vector<cv::Point2f> &pickedPointsA, std::vector<cv::Point2f> &pickedPointsB)
 {
-    // Create a random number generator
     std::random_device rd;
     std::mt19937 gen(rd());
-
     // Create an index vector representing indices of the paired values
     std::vector<size_t> indices(pointsA.size());
     std::iota(indices.begin(), indices.end(), 0);
@@ -144,7 +151,6 @@ void selectRandomSample(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point
         newPickedPointsA.push_back(pointsA[index]);
         newPickedPointsB.push_back(pointsB[index]);
     }
-
     pickedPointsA = newPickedPointsA;
     pickedPointsB = newPickedPointsB;
 }
@@ -262,6 +268,9 @@ cv::Mat myFindHomographyHelper(int numPoints, std::vector<cv::Point2f> pointsA, 
 
     // // Denormalize the homography matrix
     H = T2.inv() * H * T1;
+
+    // normalize matrix
+    H = H / H.at<double>(2, 2);
 
     return H;
 }
