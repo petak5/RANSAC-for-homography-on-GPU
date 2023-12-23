@@ -74,23 +74,31 @@ int main(int argc, char** argv) {
 
     auto homography_ref = new Homography(Homography::CV);
     cv::Mat H_ref = homography_ref->find(points1, points2);
-    auto homography_our = new Homography(Homography::DLT);
-    cv::Mat H_our = homography_our->find(points1, points2);
-
     std::cout << "Reference homography" << std::endl << H_ref << std::endl;
     std::cout << homography_ref->perf << std::endl;
+
+
+    auto homography_our = new Homography(Homography::DLT);
+    cv::Mat H_our = homography_our->find(points1, points2);
     std::cout << "Our homography" << std::endl << H_our << std::endl;
     std::cout << homography_our->perf << std::endl;
+    
+    
+    auto homography_our_eigen = new Homography(Homography::eigenDLT);
+    cv::Mat H_our_eigen = homography_our_eigen->find(points1, points2);
+    std::cout << "Our homography (eigen)" << std::endl << H_our_eigen << std::endl;
+    std::cout << homography_our_eigen->perf << std::endl;
 
-    // Warp image
+
+    // // Warp image
     cv::Mat img1_ref_warped;
     cv::warpPerspective(img1, img1_ref_warped, H_ref, img2.size());
     cv::Mat img1_our_warped;
-    cv::warpPerspective(img1, img1_our_warped, H_our, img2.size());
+    cv::warpPerspective(img1, img1_our_warped, H_our_eigen, img2.size());
 
-    // Display the warped image
-    // cv::imshow("Warped Image", img1_warped);
-    // cv::waitKey(0);
+    // // Display the warped image
+    // // cv::imshow("Warped Image", img1_warped);
+    // // cv::waitKey(0);
 
     cv::imwrite("image_A.jpg", img1);
     cv::imwrite("image_B.jpg", img2);

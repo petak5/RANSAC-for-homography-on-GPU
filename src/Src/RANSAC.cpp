@@ -7,6 +7,7 @@
 
 void selectRandomSample(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point2f> &pointsB, std::vector<cv::Point2f> &pickedPointsA, std::vector<cv::Point2f> &pickedPointsB)
 {
+    // get generator random numbers 
     std::random_device rd;
     std::mt19937 gen(rd());
     // Create an index vector representing indices of the paired values
@@ -16,18 +17,15 @@ void selectRandomSample(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point
     // Shuffle the indices
     std::shuffle(indices.begin(), indices.end(), gen);
 
-    // Create two new vectors to store the picked pairs of values
-    std::vector<cv::Point2f> newPickedPointsA;
-    std::vector<cv::Point2f> newPickedPointsB;
+    pickedPointsA.clear();
+    pickedPointsB.clear();
 
     // Pick the first 4 indices and store the corresponding pairs
     for (size_t i = 0; i < 4 && i < indices.size(); ++i) {
         size_t index = indices[i];
-        newPickedPointsA.push_back(pointsA[index]);
-        newPickedPointsB.push_back(pointsB[index]);
+        pickedPointsA.push_back(pointsA[index]);
+        pickedPointsB.push_back(pointsB[index]);
     }
-    pickedPointsA = newPickedPointsA;
-    pickedPointsB = newPickedPointsB;
 }
 
 cv::Point2f applyHomography(const cv::Mat& H, const cv::Point2f& point)

@@ -27,4 +27,5 @@ public:
     cv::Mat find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Point2f> &pointsB);
     static cv::Mat CV(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB);
     static cv::Mat DLT(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB);
+    static cv::Mat eigenDLT(std::vector<cv::Point2f> pointsA, std::vector<cv::Point2f> pointsB);
 };

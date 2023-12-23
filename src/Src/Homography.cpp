@@ -33,7 +33,7 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
 
     cv::Mat bestH;
     int bestInliers = 0;
-    std::vector<cv::Point2f> bestPointsA_our, bestPointsB_our;
+    std::vector<cv::Point2f> bestPointsA, bestPointsB;
 
     for (int iter = 0; iter < maxIterations; iter++) {
         // 1. Randomly select a sample of 4 points
@@ -63,6 +63,7 @@ cv::Mat Homography::find(std::vector<cv::Point2f> &pointsA, std::vector<cv::Poin
     this->perf.inlierCount = bestInliers;
     
     // 5. Optional: refine homography using all inliers from the best model
+    // H = this->findHomography(pointsA, pointsB)
     return bestH;
 }
 
